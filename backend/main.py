@@ -1,6 +1,5 @@
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import users, plans, feedback, knowledge, rag
+from app.api import knowledge, rag
 from app.config import settings
 
 app = FastAPI(
@@ -17,9 +16,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(users.router, prefix="/api/users", tags=["users"])
-app.include_router(plans.router, prefix="/api/plans", tags=["plans"])
-app.include_router(feedback.router, prefix="/api/feedback", tags=["feedback"])
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["knowledge"])
 app.include_router(rag.router, prefix="/api", tags=["RAG Knowledge Base"])
 
@@ -29,4 +25,22 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "services": ["users", "plans", "feedback", "knowledge", "rag"]}
+    return {"status": "healthy", "services": ["knowledge", "rag"]}
+
+@app.get("/test-rag")
+async def test_rag():
+    """Test RAG service without requiring API keys"""
+    try:
+        from app.services.rag_service import RAGService
+        rag_service = RAGService()
+        stats = rag_service.get_statistics()
+        return {
+            "status": "success",
+            "message": "RAG service is working!",
+            "statistics": stats
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"RAG service error: {str(e)}"
+        }
